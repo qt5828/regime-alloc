@@ -1,76 +1,68 @@
 # regime-alloc
 
-A research codebase for regime-aware portfolio allocation. It includes a reproduction of **STABLE** (Soun et al., ICLR 2026), which is the baseline, and leaves room for a new proposed method. All methods share the same data, splits, backtester and metrics.
+레짐 인식 포트폴리오 배분 연구 코드베이스. **STABLE** (Soun et al., ICLR 2026)을 baseline으로 재현하고, 그 위에 새 방법(proposed)을 얹는다. 모든 method가 같은 데이터·split·백테스터·지표를 공유한다.
 
-## Setup
+## 문서
+| 문서 | 용도 |
+|---|---|
+| `README.md` | 개요, 설치·실행·모니터링 방법, 코드 구조 |
+| `docs/NAMING.md` | 명명 규칙과 저장 구조 (설정·데이터·결과 파일이 어디에 어떤 이름으로 저장되는지, git 규칙) |
+| `docs/EXPERIMENTS.md` | 실험 기록 (목적, 설정, 커밋, 결과 위치, 결과 요약) |
+| `docs/DECISIONS.md` | 논문→코드 대응, 논문에 없는 값의 선택과 근거, 범위, 알려진 문제 |
+| `docs/CHANGELOG.md` | 커밋 단위 변경 이력 |
+
+## 설치
 ```bash
 /usr/local/bin/python3.11 -m venv .venv
 .venv/bin/pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cu121
-.venv/bin/pip install -r requirements.txt     # (without the torch line)
+.venv/bin/pip install -r requirements.txt     # torch 줄 제외
 ```
-On this host, GPU 6 fails CUDA init. `run_experiment.py` uses `0,1,2,3,4,5,7` by default.
 
-## Run
+## 실행
 ```bash
-.venv/bin/python scripts/download.py                       # yfinance, 2012-01-01 ~ 2026-10-15 → data/raw/
+.venv/bin/python scripts/download.py                                         # yfinance → data/raw/
 .venv/bin/python scripts/run_experiment.py configs/experiments/paper_table3_4.yaml
-# single job:  scripts/run_method.py --market sp500 --method configs/methods/stable.yaml --exp X [--set '{"train":{"epochs":1}}']
+.venv/bin/python scripts/run_method.py --market sp500 --method configs/methods/stable.yaml --exp X \
+    [--set '{"train":{"epochs":1}}'] [--skip-train]                          # 작업 하나만
 .venv/bin/python -m pytest
 ```
-Outputs go to `results/<exp>/<market>/<method>/`: `metrics.json`, `daily_returns.csv`, `weights.csv`, `model.pt`, `train_log.jsonl`. The run also writes `results/<exp>/summary.md`, which compares your numbers with paper Tables 3 and 4.
+`run_experiment.py`는 (시장 × method)마다 subprocess를 띄운다. STABLE은 GPU를 하나씩 나눠 쓰고, 기본 GPU 목록은 `0,1,2,3,4,5,7`이다(이 서버의 GPU 6은 고장).
 
-## Layout
+## 모니터링
+```bash
+.venv/bin/python scripts/status.py                    # 모든 실험의 상태를 한 번 출력
+.venv/bin/python scripts/status.py paper_table3_4 --watch 60    # 60초마다 갱신
+tail -f results/<exp>/logs/<market>_<method>.log      # 작업별 실시간 로그
 ```
-configs/
-  data/universes.yaml        market → GICS sector → tickers, index proxy, macro tickers
-  splits/*.yaml              train/test windows (paper_main = paper Table 2)
-  methods/*.yaml             hyperparameters, each tagged [paper] / [ref:X] / [assume]
-  experiments/*.yaml         markets × methods × split
+`status.py`는 작업마다 상태(pending / training / evaluating / done / FAILED / stalled?), epoch 진행률, ETA, 최근 loss, 완료된 작업의 지표를 보여준다.
+
+## 코드 구조
+```
+configs/          data/ (유니버스) · splits/ · methods/ · experiments/
 regime_alloc/
-  data/        download (yfinance + parquet cache), universe filter, MarketData bundle (dataset.py)
-  features/    macro m_τ, Kalman β_τ (stock embedding)
-  diffusion/   noise schedule, DDIM sampler
-  nn/          conditional 1-D UNet
-  portfolio/   Black–Litterman + max-Sharpe MVO
-  eval/        backtest (shared by all methods), metrics (ASR/RMDD/AVol/MSE/DTW)
-  methods/     base.py (interface) · registry.py · stable/ · classic/ (CRP, MVO, MOM) · proposed/ (new method goes here)
-scripts/       download, run_method, run_experiment
-tests/         BL / DDIM / Kalman / metric / model sanity tests
+  data/           yfinance 다운로드, 유니버스 필터, MarketData 번들 (dataset.py)
+  features/       거시 m_τ, Kalman β_τ (종목 임베딩)
+  diffusion/      noise schedule, DDIM 샘플러
+  nn/             조건부 1-D UNet
+  portfolio/      Black–Litterman + max-Sharpe MVO
+  eval/           백테스트 (모든 method 공통), 지표 (ASR/RMDD/AVol/MSE/DTW)
+  methods/        base.py (인터페이스) · registry.py · stable/ · classic/ (CRP, MVO, MOM) · proposed/
+scripts/          download · run_method · run_experiment · status
+tests/            BL / DDIM / Kalman / 지표 / 모델 sanity test
+docs/             기록용 문서 (위 표)
 ```
-**To add a method:** subclass `methods/base.Method` (`fit`, `load`, `allocate`, and optionally `forecast`), then register it in `methods/registry.py` and add a config under `configs/methods/`. A method sees only `MarketData` and the rebalance index τ, and must not read rows after τ.
+**새 method 추가:** `methods/base.Method`를 상속해 `fit`, `load`, `allocate`(필요하면 `forecast`도)를 구현한다. 그다음 `methods/registry.py`에 등록하고 `configs/methods/`에 설정을 추가한다. method는 `MarketData`와 리밸런싱 시점 τ만 받으며, τ 이후 행을 읽으면 안 된다.
 
-**Leakage guards:** the calendar stops at `test_end`. Normalisation and Kalman filtering are causal. Return scale is fit on the train window only. Training targets never cross `train_end`. On non-US markets, US-quoted macro series are lagged by one day.
+**누수 방지:**
+- 달력은 `test_end`에서 끝난다.
+- 정규화와 Kalman 필터는 인과적(causal)이다.
+- 수익률 스케일은 학습구간에서만 구한다.
+- 학습 타깃은 `train_end`를 넘지 않는다.
+- 비미국 시장에서는 미국 거시지표를 1일 늦춰 쓴다.
 
-## Paper → code
-| Paper | Code |
-|---|---|
-| m_τ (Table 1): index, DXY, 10y−3m, VIX, gold; ν-rolling z-score + log-diff | `features/macro.py` (d_m = 10) |
-| β_τ^(s) Kalman embedding (Das & Ghoshal 2010) | `features/kalman_beta.py` |
-| c_τ^(s) = [β, normalised close, daily log returns] | `methods/stable/method.py::StableFeatures` |
-| CDG + MLG: ε̂ = ε̂_n + z(ε̂_n^(s) − ε̂_n), z = g_π(h_f) ∈ [0, z_max], Eq. 2 loss | `methods/stable/model.py` |
-| DDIM (§3.3, A.2) | `diffusion/ddim.py` |
-| Views (Eq. 3–4), BL posterior (Eq. 6–7), w* (Eq. 8), μ_prior = Σ_prior w_eq (A.3) | `portfolio/black_litterman.py` |
-| Ablations (A.7) | `ablation.use_kfe / use_mlg / use_bl` in `configs/methods/stable.yaml` |
+**재현성:** 시드 0에 cuDNN/cuBLAS 결정적 모드를 켜서, 다시 돌려도 결과가 bit 단위로 같다.
 
-## Values not stated in the paper
-| Item | Choice | Source |
-|---|---|---|
-| Data source | yfinance adjusted close | user decision |
-| CSI300 / KOSPI200 index | 510300.SS / 069500.KS ETFs (yfinance has no 000300.SS or ^KS200 history) | assume |
-| 3-month rate | ^IRX (13-week T-bill) | assume |
-| Universe | hand-picked from GICS top caps as of 2025-03; dropped if not listed for the whole window → S&P 55, CSI 55, EURO 42 (paper 37), KOSPI 39 (paper 44) | assume |
-| Noise schedule | linear 1e-4→0.02 rescaled by 1000/T | Improved-DDPM |
-| UNet | lucidrains `Unet1D` without attention, dim 64, mults (1,2,4) | ref |
-| Optimizer | Adam lr 2e-4, batch 128, grad-clip 1 | DDPM |
-| EMA | 0.995 | Diffusion-TS |
-| Kalman Q, R | Q = δ/(1−δ)I with δ = 1e-4; R estimated adaptively from a 120-day innovation window | Chan / Das & Ghoshal |
-| Return history in c_τ | last ℓ = 20 days; returns scaled by per-stock train std | assume |
-| Prior covariance | ν-day daily cov × ℓ (matched to the ℓ-day view horizon) | assume |
-| Ω when k ≤ S | Σ_view is singular → pseudo-inverse | assume |
-| Backtest | rebalance every ℓ days, buy-and-hold in between, no costs | assume |
-| DTW | \|·\| cost, normalised by ℓ | assume |
-| MVO / MOM baselines | long-only max-Sharpe on 120 days / top-third equal weight on 120-day momentum | Markowitz / Jegadeesh–Titman |
-
-## Status
-- Done: data pipeline, STABLE, CRP/MVO/MOM, an end-to-end smoke run (1 epoch) and the unit tests.
-- Not yet: deep baselines (DeepTrader, MetaTrader, AlphaMix, Diffusion-TS, AEC-GAN, KoVAE) and the Appendix A.4–A.6 experiments.
+## 현황
+- 완료: 데이터 파이프라인, STABLE, CRP/MVO/MOM, smoke test, 단위 테스트, 모니터링
+- 진행 중: `paper_table3_4` 본 학습 (`docs/EXPERIMENTS.md`)
+- 예정: 딥러닝 baseline, proposed method

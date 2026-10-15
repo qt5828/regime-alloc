@@ -72,7 +72,7 @@ def main():
         running, gi = [], 0
         for m, spec in jobs:
             label = method_label(load_method_cfg(spec))
-            env = dict(os.environ)
+            env = dict(os.environ, PYTHONUNBUFFERED="1")   # live logs in results/<exp>/logs
             if load_method_cfg(spec)["method"] == "stable":     # only STABLE needs a GPU
                 env["CUDA_VISIBLE_DEVICES"] = gpus[gi % len(gpus)]
                 gi += 1
