@@ -1,0 +1,10 @@
+# Reproduces paper Table 3 (portfolio) and Table 4 (forecast) for the methods
+# implemented so far.
+name: smoke
+split: configs/splits/paper_main.yaml
+markets: [sp500, csi300, eurostoxx, kospi200]
+methods:
+  - configs/methods/stable.yaml
+  - configs/methods/classic.yaml:crp
+  - configs/methods/classic.yaml:mvo
+  - configs/methods/classic.yaml:mom

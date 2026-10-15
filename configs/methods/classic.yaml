@@ -1,0 +1,12 @@
+# Classical baselines (paper §4.1). Paper gives no settings; values below are
+# conventional choices from the cited works.
+crp:
+  method: crp                # Kelly 1956: equal weight, rebalanced every decision time
+mvo:
+  method: mvo                # Markowitz 1952: max-Sharpe, long-only, ν-day mean/cov
+  lookback: 120              # [assume] = ν
+mom:
+  method: mom                # Jegadeesh & Titman 1993: long past winners
+  lookback: 120              # [ref:J&T] ~6-month formation period
+  skip: 1                    # [assume] skip most recent day
+  top_frac: 0.3333           # [ref:J&T] top tercile/decile winners, equal weight

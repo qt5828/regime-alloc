@@ -1,0 +1,10 @@
+matplotlib==3.11.2
+numpy==1.26.4
+pandas==2.2.2
+pyarrow==16.1.0
+pytest==9.1.1
+PyYAML==6.0.3
+scipy==1.13.1
+torch==2.3.1+cu121
+tqdm==4.70.1
+yfinance==1.7.0

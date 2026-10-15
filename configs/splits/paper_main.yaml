@@ -1,0 +1,6 @@
+# Paper Table 2: identical split for all four markets.
+name: paper_main
+train_start: "2013-01-01"
+train_end: "2024-09-30"      # "Train cut 2024-09"
+test_start: "2024-10-01"
+test_end: "2025-03-31"       # "Test to 2025-03"

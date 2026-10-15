@@ -1,0 +1,47 @@
+# STABLE hyperparameters.
+# [paper]  = stated in the paper (Table 12 / §3 / §4.1)
+# [ref:X]  = not stated; taken from the cited work X
+# [assume] = not stated anywhere; our choice (see README)
+method: stable
+
+features:
+  nu: 120                    # [paper] BL prior window / rolling normalisation length ν
+  seg_len: 20                # [paper] segment length ℓ = investment horizon
+  hist_len: 20               # [assume] length of past daily log-return window in c_τ (= ℓ)
+  kalman:
+    delta: 1.0e-4            # [ref:Kalman regression, Chan 2013] state noise Q = δ/(1-δ) I
+    r_window: 120            # [ref:Das&Ghoshal 2010 adaptive R] innovation window (= ν)
+
+model:
+  embed_dim: 16              # [paper] d (macro & stock encoder width)
+  unet_dim: 64               # [ref:lucidrains Unet1D default dim]
+  unet_dim_mults: [1, 2, 4]  # [ref:lucidrains Unet1D] trimmed to 3 levels for ℓ=20 (20->10->5)
+  z_max: 2.0                 # [paper] balancing-gate cap
+
+diffusion:
+  timesteps: 200             # [paper] forward noising steps
+  beta_schedule: linear      # [ref:DDPM / Improved-DDPM linear, rescaled by 1000/T]
+  ddim_steps: 30             # [paper]
+  eta: 0.0                   # [paper] (KOSPI200 overrides to 0.01)
+  n_paths: 50                # [paper] k
+
+train:
+  epochs: 200                # [paper] A.9
+  batch_size: 128            # [ref:DDPM]
+  lr: 2.0e-4                 # [ref:DDPM]
+  l2_weight: 1.0e-3          # [paper] β, explicit β||θ||² term in Eq.(2)
+  ema_decay: 0.995           # [ref:Diffusion-TS]
+  grad_clip: 1.0             # [ref:DDPM]
+  seed: 0                    # [paper] fixed global seed
+
+bl:
+  view_precision: pinv       # [assume] Σ_view is singular when k <= S -> Ω = pinv(Σ_view)
+
+ablation:                    # A.7 switches (off = full STABLE)
+  use_kfe: true
+  use_mlg: true
+  use_bl: true
+
+market_overrides:
+  kospi200:
+    diffusion: {eta: 0.01}   # [paper] Table 12

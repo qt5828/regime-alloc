@@ -1,0 +1,81 @@
+# Universe per market (paper §4.1): GICS sectors as of 2025-03-31,
+# top-5 by market cap (S&P500, CSI300) / top-4 (EUROSTOXX, KOSPI200).
+# Hand-curated yfinance tickers. Stocks without full history over the split
+# window are dropped automatically (regime_alloc/data/universe.py), so the
+# final count can differ from the paper's 55/55/37/44.
+
+macro:                       # Table 1 (shared across regions, US-quoted)
+  dollar: DX-Y.NYB
+  tnx: ^TNX                  # 10y yield
+  irx: ^IRX                  # 13-week T-bill, proxy for 3m -> term spread = tnx - irx
+  vix: ^VIX
+  gold: GC=F
+
+markets:
+  sp500:
+    region: US
+    index: ^GSPC
+    foreign_macro_lag: false # US series close at the same time as the market
+    sectors:
+      information_technology: [AAPL, MSFT, NVDA, AVGO, ORCL]
+      communication_services: [GOOGL, META, NFLX, TMUS, DIS]
+      consumer_discretionary: [AMZN, TSLA, HD, MCD, BKNG]
+      consumer_staples: [WMT, COST, PG, KO, PM]
+      energy: [XOM, CVX, COP, WMB, EOG]
+      financials: [JPM, V, MA, BAC, WFC]
+      health_care: [LLY, UNH, JNJ, ABBV, MRK]
+      industrials: [GE, RTX, CAT, UNP, HON]
+      materials: [LIN, SHW, ECL, APD, FCX]
+      real_estate: [PLD, AMT, WELL, EQIX, SPG]
+      utilities: [NEE, SO, DUK, AEP, D]
+
+  csi300:
+    region: China
+    index: 510300.SS         # CSI300 ETF; 000300.SS has no history on yfinance
+    foreign_macro_lag: true  # US macro of day t is only known after the Asian close
+    sectors:
+      financials: [601398.SS, 601288.SS, 601939.SS, 601988.SS, 600036.SS]
+      energy: [601857.SS, 600028.SS, 601088.SS, 601898.SS, 600188.SS]
+      consumer_staples: [600519.SS, 000858.SZ, 600887.SS, 000568.SZ, 600809.SS]
+      industrials: [601668.SS, 601766.SS, 600031.SS, 601390.SS, 601186.SS]
+      consumer_discretionary: [002594.SZ, 000651.SZ, 601888.SS, 600104.SS, 601633.SS]
+      information_technology: [002415.SZ, 000725.SZ, 002475.SZ, 000063.SZ, 002371.SZ]
+      health_care: [600276.SS, 300015.SZ, 000538.SZ, 600436.SS, 300122.SZ]
+      materials: [601899.SS, 600309.SS, 600019.SS, 603993.SS, 600585.SS]
+      utilities: [600900.SS, 600011.SS, 600886.SS, 600795.SS, 600027.SS]
+      communication_services: [600050.SS, 002027.SZ, 002555.SZ, 002602.SZ, 002624.SZ]
+      real_estate: [000002.SZ, 600048.SS, 600663.SS, 600383.SS, 000069.SZ]
+
+  eurostoxx:
+    region: Europe
+    index: ^STOXX50E
+    foreign_macro_lag: true  # EU closes before the US close
+    sectors:
+      information_technology: [ASML.AS, SAP.DE, IFX.DE, CAP.PA]
+      communication_services: [DTE.DE, ORA.PA, TEF.MC, PUB.PA]
+      consumer_discretionary: [MC.PA, RMS.PA, ITX.MC, MBG.DE]
+      consumer_staples: [OR.PA, ABI.BR, AD.AS, BN.PA]
+      energy: [TTE.PA, ENI.MI, REP.MC, GALP.LS]
+      financials: [ALV.DE, BNP.PA, SAN.MC, INGA.AS]
+      health_care: [SAN.PA, EL.PA, MRK.DE, BAYN.DE]
+      industrials: [SIE.DE, SU.PA, AIR.PA, SAF.PA]
+      materials: [AI.PA, BAS.DE, HEI.DE, AKZA.AS]
+      utilities: [IBE.MC, ENEL.MI, EOAN.DE, ENGI.PA]
+      real_estate: [VNA.DE, URW.PA, LI.PA, COV.PA]
+
+  kospi200:
+    region: South Korea
+    index: 069500.KS         # KODEX 200 ETF; ^KS200 has no history on yfinance
+    foreign_macro_lag: true
+    sectors:
+      information_technology: [005930.KS, 000660.KS, 009150.KS, 006400.KS]
+      communication_services: [035420.KS, 035720.KS, 017670.KS, 030200.KS]
+      consumer_discretionary: [005380.KS, 000270.KS, 012330.KS, 066570.KS]
+      consumer_staples: [033780.KS, 097950.KS, 051900.KS, 004370.KS]
+      energy: [096770.KS, 010950.KS, 078930.KS, 006120.KS]
+      financials: [105560.KS, 055550.KS, 086790.KS, 032830.KS]
+      health_care: [000100.KS, 128940.KS, 006280.KS, 069620.KS]
+      industrials: [012450.KS, 009540.KS, 034020.KS, 028260.KS]
+      materials: [005490.KS, 051910.KS, 010130.KS, 011170.KS]
+      utilities: [015760.KS, 036460.KS, 017390.KS, 071320.KS]
+      real_estate: []          # no KOSPI real-estate names with history since 2013
