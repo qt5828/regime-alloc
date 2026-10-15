@@ -128,6 +128,7 @@ class Stable(Method):
                    out_dir / "model.pt")
 
     def load(self, out_dir: Path, data: MarketData | None = None) -> None:
+        set_seed(self.cfg["train"]["seed"])
         self._setup(data)
         st = torch.load(out_dir / "model.pt", map_location=self.device)
         self.net.load_state_dict(st["net"])
