@@ -29,12 +29,17 @@ results/<exp>/
     config.json                    실제 사용된 method·split 설정, 종목 리스트, 제외 종목
     train_log.jsonl                epoch별 loss / mse / gate 평균 / 경과 시간 (학습형 method만)
     model.pt                       net + EMA 가중치 (학습형 method만)
+    resources.json                 장치, GPU 이름, peak GPU 메모리, 파라미터 수, 학습/평가 시간
     metrics.json                   portfolio(ASR, RMDD, AVol) + forecast(MSE, DTW)
     daily_returns.csv              테스트 구간 일간 포트폴리오 수익률
     weights.csv                    리밸런싱 시점(행) × 종목(열) 가중치
 ```
 - `<label>` = method 이름. ablation 플래그가 꺼지면 접미사가 붙음: `stable-no_kfe`, `stable-no_mlg_bl`.
 - 같은 실험 이름으로 다시 돌리면 덮어쓴다. 결과를 보존하려면 실험 이름을 새로 정한다(예: `paper_table3_4_seed1`).
+
+## 문서 (`docs/`)
+- 공개(git 포함): `NAMING.md`, `DECISIONS.md`, `CHANGELOG.md`
+- 로컬 전용(`docs/private/`, git 제외): 실험 결과, 이슈, 서버 특이사항 등 공개하지 않을 내용
 
 ## 코드
 - 공통 인프라는 `regime_alloc/<영역>/`, method 구현은 `regime_alloc/methods/<method>/`.
@@ -43,5 +48,5 @@ results/<exp>/
 
 ## Git
 - 브랜치: `main`. 실험용 큰 변경은 `exp/<이름>`, 기능은 `feat/<이름>`.
-- 커밋 메시지: 첫 줄에 영어 명령형 요약(≤ 60자). 필요하면 빈 줄 뒤에 `- ` 목록으로 핵심만 적는다.
-- 커밋·push 전에 사용자 확인을 받는다. 커밋할 때마다 `docs/CHANGELOG.md`에 한 줄 추가한다.
+- 커밋 메시지: **한글**. 첫 줄에 요약(≤ 50자), 필요하면 빈 줄 뒤에 `- ` 목록으로 핵심만 적는다.
+- 커밋·push 전에 사용자 확인을 받는다. 커밋할 때마다 `docs/CHANGELOG.md`에 한 줄 추가한다. 실험 결과·이슈는 `docs/private/`에만 적는다.

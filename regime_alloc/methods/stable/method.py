@@ -124,6 +124,16 @@ class Stable(Method):
             if (epoch + 1) % 10 == 0 or epoch == 0:
                 print(f"[stable/{self.market}] " + json.dumps(rec))
         log.close()
+        res = {"device": str(self.device),
+               "gpu": torch.cuda.get_device_name(self.device) if self.device.type == "cuda" else None,
+               "peak_gpu_mem_mb": round(torch.cuda.max_memory_allocated(self.device) / 2**20, 1)
+               if self.device.type == "cuda" else None,
+               "params": sum(p.numel() for p in self.net.parameters()),
+               "train_pairs": len(pairs), "epochs": tc["epochs"], "batch_size": tc["batch_size"],
+               "train_time_s": round(time.time() - t0, 1),
+               "sec_per_epoch": round((time.time() - t0) / tc["epochs"], 1)}
+        with open(out_dir / "resources.json", "w") as f:
+            json.dump(res, f, indent=2)
         torch.save({"net": self.net.state_dict(), "ema": self.ema.state_dict()},
                    out_dir / "model.pt")
 

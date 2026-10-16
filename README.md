@@ -7,9 +7,10 @@
 |---|---|
 | `README.md` | 개요, 설치·실행·모니터링 방법, 코드 구조 |
 | `docs/NAMING.md` | 명명 규칙과 저장 구조 (설정·데이터·결과 파일이 어디에 어떤 이름으로 저장되는지, git 규칙) |
-| `docs/EXPERIMENTS.md` | 실험 기록 (목적, 설정, 커밋, 결과 위치, 결과 요약) |
-| `docs/DECISIONS.md` | 논문→코드 대응, 논문에 없는 값의 선택과 근거, 범위, 알려진 문제 |
+| `docs/DECISIONS.md` | 논문→코드 대응, 논문에 없는 값의 선택과 근거, 논문과 다른 점, 범위 |
 | `docs/CHANGELOG.md` | 커밋 단위 변경 이력 |
+| `docs/private/EXPERIMENTS.md` | **로컬 전용(git 제외).** 실험 기록: 목적, 설정, 커밋, 결과 위치, 결과, 학습 시간·자원 |
+| `docs/private/ISSUES.md` | **로컬 전용(git 제외).** 열린 이슈, 원인 분석, 대응 후보, 서버 특이사항 |
 
 ## 설치
 ```bash
@@ -26,7 +27,7 @@
     [--set '{"train":{"epochs":1}}'] [--skip-train]                          # 작업 하나만
 .venv/bin/python -m pytest
 ```
-`run_experiment.py`는 (시장 × method)마다 subprocess를 띄운다. STABLE은 GPU를 하나씩 나눠 쓰고, 기본 GPU 목록은 `0,1,2,3,4,5,7`이다(이 서버의 GPU 6은 고장).
+`run_experiment.py`는 (시장 × method)마다 subprocess를 띄운다. STABLE은 GPU를 하나씩 나눠 쓰고, 기본 GPU 목록은 `0,1,2,3,4,5,7`이다(GPU 6은 이 서버에서 사용 불가).
 
 ## 모니터링
 ```bash
@@ -64,5 +65,5 @@ docs/             기록용 문서 (위 표)
 
 ## 현황
 - 완료: 데이터 파이프라인, STABLE, CRP/MVO/MOM, smoke test, 단위 테스트, 모니터링
-- 진행 중: `paper_table3_4` 본 학습 (`docs/EXPERIMENTS.md`)
+- 완료: `paper_table3_4` 본 학습 (결과는 로컬 `docs/private/EXPERIMENTS.md`)
 - 예정: 딥러닝 baseline, proposed method

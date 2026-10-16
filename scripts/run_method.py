@@ -5,7 +5,10 @@ python scripts/run_method.py --market sp500 --method configs/methods/stable.yaml
 """
 import argparse
 import json
+import os
+import platform
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -45,7 +48,14 @@ if args.skip_train:
 else:
     method.fit(data, out)
 
+t_eval = time.time()
 res = run_backtest(data, method)
+rf = out / "resources.json"
+resources = json.load(open(rf)) if rf.exists() else {}
+resources.update({"eval_time_s": round(time.time() - t_eval, 1), "host_cpu": platform.processor() or platform.machine(),
+                  "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES", "")})
+with open(rf, "w") as f:
+    json.dump(resources, f, indent=2)
 res["daily"].to_csv(out / "daily_returns.csv")
 res["weights"].to_csv(out / "weights.csv")
 metrics = {"portfolio": res["portfolio"], "forecast": res.get("forecast")}
